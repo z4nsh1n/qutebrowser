@@ -12,6 +12,7 @@ parse = ArgumentParser()
 parse.add_argument('-f', 
                    default='~/.local/share/qutebrowser/userscripts/output.html')
 parse.add_argument('-p',  action='store_true')
+parse.add_argument('-o',  action='store_true')
 
 cmdline = parse.parse_args(argv[1:])
 
@@ -35,3 +36,9 @@ with codecs.open(os.environ['QUTE_HTML'], 'r', 'utf-8') as source:
         fifo.write('open -t %s' % tmpfile)
         if  cmdline.p:
             run(['libreoffice', '--convert-to','pdf', '--outdir', dirname, tmpfile])
+
+        if cmdline.p and cmdline.o:
+            [dir,file] = os.path.split(tmpfile)
+            file = file.split(".")[0]
+
+            run(['evince', dir + os.path.sep + file + ".pdf"])
