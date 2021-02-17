@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+from __future__ import absolute_import
+import codecs, os
+from readability.readability import Document
+from sys import argv
+from subprocess import run
+from argparse import ArgumentParser
+
+
+parse = ArgumentParser()
+
+parse.add_argument('-f', 
+                   default='~/.local/share/qutebrowser/userscripts/output.html')
+parse.add_argument('-p',  action='store_true')
+
+cmdline = parse.parse_args(argv[1:])
+
+tmpfile = os.path.expanduser(cmdline.f)
+dirname = os.path.dirname(tmpfile)
+
+print(tmpfile, dirname)
+
+if not os.path.exists(dirname):
+    os.makedirs(dirname)
+
+with codecs.open(os.environ['QUTE_HTML'], 'r', 'utf-8') as source:
+    doc = Document(source.read())
+    content = doc.summary().replace('<html>', '<html><head><title>%s</title></head>' % doc.title())
+
+    with codecs.open(tmpfile, 'w', 'utf-8') as target:
+        target.write('<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />')
+        target.write(content)
+
+    with open(os.environ['QUTE_FIFO'], 'w') as fifo:
+        fifo.write('open -t %s' % tmpfile)
+        if  cmdline.p:
+            run(['libreoffice', '--convert-to','pdf', '--outdir', dirname, tmpfile])
